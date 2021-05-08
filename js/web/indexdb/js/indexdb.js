@@ -141,6 +141,11 @@ let IndexDB = {
             statsTreasureClanH: 'date, clanId',
             statsTreasureClanD: 'date, clanId',
         });
+
+
+        db.version(3).stores({
+            invests: '++id,type,amount,date',
+        });
     },
 
     /**

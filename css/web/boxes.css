@@ -468,6 +468,10 @@ p {
 	background-image: url('../images/menu/guildmemberstat.png');
 }
 
+[id$=fpstats-Btn] span {
+	background-image: url('../images/menu/fpstats.png');
+}
+
 .hud-btn span.hud-counter {
 	width: 15px;
 	height: 15px;

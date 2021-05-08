@@ -889,11 +889,59 @@ const FoEproxy = (function () {
 
 	});
 
+let mapSpentFP = {
+
+    ShowDialog: (spentFP) => {
+        HTML.AddCssFile('_main');
+        
+        HTML.Box({
+            'id': 'spentfpDialog',
+            'title': i18n('Boxes.spentfpDialog.Title'),
+            'auto_close': true,
+            'dragdrop': true,
+            'minimize': false
+        });
+        $('#spentfpDialogBody').html('----------- Betrag: ' + spentFP + ' -----------');
+    },
+};
+	
 	// es wird ein LG eines Spielers geöffnet
 
 	// lgUpdateData sammelt die informationen aus mehreren Handlern
 	let lgUpdateData = null;
+	let lgCurrentOwnFP = null;
+	let fpSpentTotalOwnLG = 0;
+	let fpSpentTotalOtherLG = 0;
 
+	async function lgUpdate2(ownLG, Rankings, requestMethod) {
+		let lgCurrentOwnFPSave = lgCurrentOwnFP;
+		lgCurrentOwnFP = 0;
+		for (let i = 0; i < Rankings.length; i++) {
+			if (Rankings[i]['player'].hasOwnProperty('is_self') && Rankings[i]['player']['is_self']) {
+				lgCurrentOwnFP = Rankings[i]['forge_points'];
+				console.log("lgCurrentOwnFP: " + lgCurrentOwnFP);
+				break;
+			}
+		}
+		
+		if (requestMethod === 'contributeForgePoints') {
+			let fpSpent = lgCurrentOwnFP - lgCurrentOwnFPSave;
+			if (fpSpent < 0) {fpSpent = 0;}
+			if (ownLG) { fpSpentTotalOwnLG = fpSpentTotalOwnLG + fpSpent; }
+			else { fpSpentTotalOtherLG = fpSpentTotalOtherLG + fpSpent};
+			console.log("fpSpent: " + fpSpent);
+			console.log("fpSpentTotalOwnLG: " + fpSpentTotalOwnLG);
+			console.log("fpSpentTotalOtherLG: " + fpSpentTotalOtherLG);
+			mapSpentFP.ShowDialog(fpSpent);
+			await IndexDB.getDB();
+			await IndexDB.db.invests.add({
+				type: ownLG ? 'spentFPOwnLG' : 'spentFPOtherLG',
+				amount: fpSpent,
+				date: moment(MainParser.getCurrentDate()).format('YYYY-MM-DD')
+			});
+		}
+	}
+	
 	FoEproxy.addHandler('GreatBuildingsService', 'all', (data, postData) => {
 		let getConstruction = data.requestMethod === 'getConstruction' ? data : null;
 		let getConstructionRanking = data.requestMethod === 'getConstructionRanking' ? data : null;
@@ -932,7 +980,7 @@ const FoEproxy = (function () {
 					if(!IsLevelScroll) MainParser.SendLGData(lgUpdateData);
 				}
 
-				lgUpdate();
+				lgUpdate(data.requestMethod);
 			}
 		}
 	});
@@ -948,15 +996,17 @@ const FoEproxy = (function () {
 			Promise.resolve().then(() => lgUpdateData = null);
 		} else {
 			lgUpdateData.CityMapEntity = data;
-			lgUpdate();
+			lgUpdate(data.requestMethod);
 		}
 	});
 
 	// Update Funktion, die ausgeführt wird, sobald beide Informationen in lgUpdateData vorhanden sind.
-	function lgUpdate() {
+	function lgUpdate(requestMethod) {
 		const { CityMapEntity, Rankings, Bonus } = lgUpdateData;
 		lgUpdateData = null;
 		let IsPreviousLevel = false;
+
+		lgUpdate2(CityMapEntity.responseData[0].player_id === ExtPlayerID || Settings.GetSetting('ShowOwnPartOnAllGBs'), Rankings, requestMethod);
 
 		//Eigenes LG
 		if (CityMapEntity.responseData[0].player_id === ExtPlayerID || Settings.GetSetting('ShowOwnPartOnAllGBs')) {

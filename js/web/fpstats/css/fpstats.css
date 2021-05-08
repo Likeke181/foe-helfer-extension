@@ -1,0 +1,54 @@
+/*
+ * **************************************************************************************
+ * Copyright (C) 2021 FoE-Helper team - All Rights Reserved
+ * You may use, distribute and modify this code under the
+ * terms of the AGPL license.
+ *
+ * See file LICENSE.md or go to
+ * https://github.com/dsiekiera/foe-helfer-extension/blob/master/LICENSE.md
+ * for full license details.
+ *
+ * **************************************************************************************
+ */
+
+#fpstats {
+	width: 550px;
+	height: 400px;
+	top: calc(50vh - 200px);
+	left: calc(50vw - 310px);
+}
+
+#fpstatsBody {
+	overflow-y: auto;
+}
+
+#fpstatsBody .head {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	justify-items: center;
+	padding: 5px 10px;
+	margin-bottom: 2px;
+}
+
+#fpstatsBody .foehelper-accordion-head strong {
+	width: 60px;
+	text-align: right;
+	margin: 0 8px 0 2px;
+}
+
+.foehelper-accordion-body div {
+	border-top: 1px solid var(--border-table-top);
+	padding: 2px 0 2px 30px;
+}
+
+.foehelper-accordion-body div .fps {
+	width: 30px;
+	color: var(--text-bright);
+	text-align: right;
+	margin: 0 8px 0 2px;
+}
+
+.foehelper-accordion-body div .desc {
+	width: 45%;
+}

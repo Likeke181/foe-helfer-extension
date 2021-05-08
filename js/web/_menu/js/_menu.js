@@ -51,7 +51,8 @@ let _menu = {
 		'gildfight',
 		'investment',
 		'alerts',
-		'guildmemberstat'
+		'guildmemberstat',
+		'fpstats'
 		// 'unitsGex',
 	],
 
@@ -906,6 +907,29 @@ let _menu = {
 		});
 
 		btn.append(btn_sp);
+        return btn;
+    },
+
+        /**
+     * InfoBox für fpstats Historie
+     *
+     * @returns {*|jQuery}
+     */
+    fpstats_Btn: () => {
+
+        let btn = $('<div />').attr({
+            'id': 'fpstats-Btn',
+            'data-slug': 'fpstats'
+        }).addClass('hud-btn');
+
+        // Tooltip einbinden
+        btn = _menu.toolTipp(btn, i18n('Menu.fpstats.Title'), i18n('Menu.fpstats.Desc'));
+
+        let btn_sp = $('<span />').on('click', function () {
+            FPStats.Box();
+        });
+
+        btn.append(btn_sp);
 
 		return btn;
 	}
