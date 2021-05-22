@@ -333,7 +333,7 @@ let Outposts = {
 					for (let CostResourceName in sums) {
 						if (CostResourceName === 'diplomacy' || CostResourceName === goodProductionResourceId) continue;
 												
-						resourceCost += Math.max(Math.ceil((sums[CostResourceName] - ResourceStock[CostResourceName] | 0) / 5) * (goodProductionResourceId === 'egyptians_loot' ? 50 : 1000), 0);
+						resourceCost += Math.max(Math.ceil((sums[CostResourceName] - ResourceStock[CostResourceName] - Outposts.getCurrentProduction(CostResourceName) | 0) / 5) * (goodProductionResourceId === 'egyptians_loot' ? 50 : 1000), 0);
                     }
                 }
 				const resourceInStock = currStock[resourceID];
@@ -359,7 +359,7 @@ let Outposts = {
 						let CostResourceName = resourceIDs[CostResource];
 						if (CostResourceName === 'diplomacy' || CostResourceName === goodProductionResourceId) continue;
 
-						resourceSumAfter += Math.max(Math.ceil((sums[CostResourceName] - ResourceStock[CostResourceName]|0) / 5) * (goodProductionResourceId === 'egyptians_loot' ? 50 : 1000), 0);
+						resourceSumAfter += Math.max(Math.ceil((sums[CostResourceName] - ResourceStock[CostResourceName] - Outposts.getCurrentProduction(CostResourceName)|0) / 5) * (goodProductionResourceId === 'egyptians_loot' ? 50 : 1000), 0);
 					}
 				}
 				else {
@@ -560,6 +560,35 @@ let Outposts = {
 		Outposts.RequestGUIUpdate();
 	},
 
+	getCurrentProduction: (resourceID) => {
+		return Outposts.CityMap.entities.reduce(
+			(acc, building) => {
+				const state = building.state;
+				if (!building.connected || state.__class__ !== 'ProducingState' ) {
+					return acc;
+				}
+				const production = state.current_product;
+				if (!production) return acc;
+				
+				if (production.__class__ === 'CityEntityProductionProduct') {
+					const amount = production.product.resources[resourceID];
+					if (amount != null) {
+						return acc + amount;
+					}
+				} else if (production.__class__ === 'CityEntityResourcesWithRequirementsProduct') {
+					const amount = production.resources.resources[resourceID];
+					if (amount != null) {
+						return acc + amount;
+					}
+				}
+				return acc;
+			},
+			0
+		);
+		
+		
+		
+	},
 
 	/**
 	 * Sammelt die Güter des Außenpostens ein und färbt den Button grün
@@ -707,6 +736,27 @@ FoEproxy.addHandler('AdvancementService', 'unlock', (/** @type {FoE_NETWORK_Adva
 	}
 });
 
+
+// Status der Gebäude updaten
+FoEproxy.addHandler('CityProductionService', 'cancelProduction', (/** @type {FoE_NETWORK_CityProductionService_startProduction} */data, _postData) => {
+	const cityMap = Outposts.CityMap;
+	if (!cityMap) {
+		return;
+	}
+	const cityMapEntities = cityMap.entities;
+	let changed = false;
+	for (let entry of data.responseData.updatedEntities) {
+		const searchID = entry.id;
+		const idx = cityMapEntities.findIndex(e => e.id === searchID);
+		if (idx >= 0) {
+			cityMapEntities[idx] = entry;
+			changed = true;
+		}
+	}
+	if (changed) {
+		Outposts.RequestGUIUpdate();
+	}
+});
 
 // Status der Gebäude updaten
 FoEproxy.addHandler('CityProductionService', 'startProduction', (/** @type {FoE_NETWORK_CityProductionService_startProduction} */data, _postData) => {
